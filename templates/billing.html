@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Create Bill | {{ shop_name }}</title>
+    <style>
+        body { background: #f4f7f6; font-family: -apple-system, sans-serif; }
+        .billing-card { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .shop-info-header { background: #ffffff; border-bottom: 2px solid #f1f1f1; padding: 20px; border-radius: 15px 15px 0 0; }
+        .shop-id-badge { font-size: 0.85rem; background: #e9ecef; color: #495057; padding: 4px 12px; border-radius: 50px; }
+        .item-row { transition: all 0.2s; border-radius: 10px; }
+        .item-row:hover { background-color: #f8f9fa; }
+        .is-invalid-stock { border-color: #dc3545 !important; background-color: #fff8f8; }
+    </style>
+</head>
+<body class="py-5">
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card billing-card">
+                <div class="shop-info-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="fw-bold text-primary mb-1">{{ shop_name }}</h2>
+                        <span class="shop-id-badge"><i class="fas fa-id-card me-2"></i>Shop ID: <strong>{{ shop_id }}</strong></span>
+                    </div>
+                    <a href="/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    <h5 class="mb-4 fw-bold"><i class="fas fa-receipt me-2 text-success"></i>Billing Items</h5>
+
+                    <form action="/billing" method="POST">
+                        <div id="billing-items">
+                            <div class="row g-3 mb-3 item-row align-items-end p-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-muted">Medicine Name (Type to search)</label>
+                                    <input list="med-list" name="med_name[]" class="form-control med-input" placeholder="Start typing..." required onchange="validateAndCalculate()">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-muted">Quantity</label>
+                                    <input type="number" name="quantity[]" class="form-control qty-input" placeholder="0" min="1" required oninput="validateAndCalculate()">
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <datalist id="med-list">
+                            {% for item in available_items %}
+                            <option value="{{ item.med_name|capitalize }}"
+                                    data-price="{{ item.price }}"
+                                    data-stock="{{ item.stock_count }}">
+                                ₹{{ item.price }} — (Stock: {{ item.stock_count }})
+                            </option>
+                            {% endfor %}
+                        </datalist>
+
+                        <button type="button" class="btn btn-link text-decoration-none fw-bold mt-2" onclick="addRow()">
+                            <i class="fas fa-plus-circle me-1"></i> Add Another Item
+                        </button>
+
+                        <div class="mt-5 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center shadow-sm">
+                            <div class="text-start">
+                                <p class="text-muted mb-0 small fw-bold">Grand Total</p>
+                                <h2 class="mb-0 text-success fw-bold" id="grand-total">₹0.00</h2>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow" id="submit-btn">
+                                Finalize Bill & Deduct Stock <i class="fas fa-check-circle ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addRow() {
+        const container = document.getElementById('billing-items');
+        const firstRow = document.querySelector('.item-row');
+        const newRow = firstRow.cloneNode(true);
+        newRow.querySelector('.med-input').value = "";
+        newRow.querySelector('.qty-input').value = "";
+        newRow.querySelector('.qty-input').classList.remove('is-invalid-stock');
+        container.appendChild(newRow);
+    }
+
+    function removeRow(btn) {
+        const rows = document.querySelectorAll('.item-row');
+        if (rows.length > 1) {
+            btn.closest('.item-row').remove();
+            validateAndCalculate();
+        }
+    }
+
+    function validateAndCalculate() {
+        let total = 0;
+        let isOverStock = false;
+        const rows = document.querySelectorAll('.item-row');
+        const datalist = document.getElementById('med-list');
+
+        rows.forEach(row => {
+            const medName = row.querySelector('.med-input').value;
+            const qtyInput = row.querySelector('.qty-input');
+            const qty = parseInt(qtyInput.value) || 0;
+
+            const option = Array.from(datalist.options).find(opt => opt.value === medName);
+
+            if (option) {
+                const price = parseFloat(option.getAttribute('data-price'));
+                const maxStock = parseInt(option.getAttribute('data-stock'));
+
+                if (qty > maxStock) {
+                    qtyInput.classList.add('is-invalid-stock');
+                    isOverStock = true;
+                } else {
+                    qtyInput.classList.remove('is-invalid-stock');
+                }
+                total += (price * qty);
+            }
+        });
+
+        document.getElementById('grand-total').innerText = '₹' + total.toFixed(2);
+        document.getElementById('submit-btn').disabled = isOverStock;
+    }
+</script>
+</body>
+</html>

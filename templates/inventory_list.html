@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Inventory List | MedManager</title>
+    <style>
+        body { background: #f4f7f6; font-family: sans-serif; }
+        .inventory-container { max-width: 900px; margin: 50px auto; }
+        .card { border-radius: 15px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .shop-header { background: #2c3e50; color: white; border-radius: 15px 15px 0 0; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container inventory-container">
+    <div class="mb-3">
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="shop-header d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-1 text-capitalize">{{ shop.name }}</h3>
+                <span class="badge bg-light text-dark">Shop ID: {{ shop.shop_id }}</span>
+            </div>
+            <i class="fas fa-file-medical-alt fa-2x opacity-50"></i>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Medicine Name</th>
+                            <th class="text-center">Current Stock</th>
+                            <th class="text-center">Price per Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-capitalize">{{ item.med_name }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if item.stock_count > 10 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} px-3">
+                                    {{ item.stock_count }} units
+                                </span>
+                            </td>
+                            <td class="text-center text-primary fw-bold">₹{{ item.price }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">No medicines found in inventory.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
